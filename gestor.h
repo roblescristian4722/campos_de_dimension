@@ -10,6 +10,7 @@
 #define CANTIDAD_CAMPOS 7
 
 #include <iostream>
+#include <cstdio>
 #include <fstream>
 #include <vector>
 #include <regex>
@@ -32,7 +33,6 @@ public:
     void capturar_datos(Usuario& usuario);
     bool codigo_usado(const string codigo);
     void modificar_datos(Usuario& usuario, char i);
-    unsigned char eliminar_ceros(string &cad);
 
 private:
     vector<Usuario> m_usuarios;

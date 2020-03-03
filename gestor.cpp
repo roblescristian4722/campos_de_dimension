@@ -3,11 +3,34 @@
 
 Gestor::Gestor()
 {
+    string  cadTmp;
+    char charTmp;
+    unsigned char tam;
     fstream archivo("usuarios.txt", ios::out | ios::in);
     if (!archivo.is_open())
     {
         fstream archivo_abrir("usuarios.txt", ios::out);
         archivo_abrir.close();
+    }
+    else
+    {
+        while (!archivo.eof())
+            for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
+            {
+                cadTmp = "";
+                archivo.read((char*)&tam, sizeof(tam));
+
+                if (archivo.eof())
+                    break;
+
+                while (int(tam--))
+                {
+                    archivo.get(charTmp);
+                    cadTmp += charTmp;
+                }
+                if (!i && cadTmp.length())
+                    m_codigos.push_back(cadTmp);
+            }
     }
 }
 
@@ -109,7 +132,8 @@ void Gestor::buscar()
 
 void Gestor::capturar(const Usuario& usuario)
 {
-    string aux;
+    string aux = "";
+    string aux2 = "";
     unsigned char tam;
     fstream archivo("usuarios.txt", ios::out | ios::in | ios::app);
 
@@ -117,6 +141,7 @@ void Gestor::capturar(const Usuario& usuario)
         cerr << "Error en el archivo de salida" << endl;
     
     tam = usuario.getCodigo().length();
+    m_codigos.push_back(usuario.getCodigo());
     archivo.write((char*)&tam, sizeof(tam));
     archivo << usuario.getCodigo();
 
@@ -137,16 +162,14 @@ void Gestor::capturar(const Usuario& usuario)
     archivo << usuario.getGenero();
 
     aux = to_string(usuario.getPeso());
-    tam = eliminar_ceros(aux);
+    tam = aux.length();
     archivo.write((char*)&tam, sizeof(tam));
-    for(int i = 0; i < int(tam); ++i)
-        archivo << aux[i];
+    archivo << aux;
 
-    aux = to_string(usuario.getAltura());
-    tam = eliminar_ceros(aux);
+    aux2 = to_string(usuario.getAltura());
+    tam = aux2.length();
     archivo.write((char*)&tam, sizeof(tam));
-    for(int i = 0; i < tam; ++i)
-        archivo << aux[i];
+    archivo << aux2;
     
     archivo.close();
     cout << endl
@@ -156,17 +179,50 @@ void Gestor::capturar(const Usuario& usuario)
 
 void Gestor::eliminar()
 {
-    unsigned int i;
+    bool found = false;
+    unsigned int opc;
+    unsigned char tam;
+    char auxChar;
+    string aux;
+    fstream archivo("usuarios.txt", ios::in | ios::out);
+    fstream tmp("usuarios.tmp", ios::out);
 
     mostrar();
-    if (m_usuarios.size())
+    if (m_codigos.size())
     {
         cout << " Ingrese número del usuario a eliminar: ";
-        cin >> i;
-        if (i <= m_usuarios.size() && i)
+        cin >> opc;
+        if (opc <= m_codigos.size() && opc)
         {
-            m_usuarios.erase(m_usuarios.begin() + i - 1);
-            escribir();
+            while (!archivo.eof())
+            {
+                for (int i = 0; i < CANTIDAD_CAMPOS; i++)
+                {
+                    aux = "";
+                    archivo.read((char*)&tam, sizeof(tam));
+                    if (archivo.eof())
+                        break;
+                    
+                    for (int j = 0; j < int(tam); ++j)
+                    {
+                        archivo.get(auxChar);
+                        aux += auxChar;
+                    }
+                    if (!i && m_codigos[opc - 1] == aux)
+                    {
+                        cout << "adsf" << endl;
+                        found = true;
+                    }
+                    else if (found && i == CANTIDAD_CAMPOS - 1)
+                        found = false;
+                    else if (!found)
+                    {
+                        tmp.write((char*)&tam, sizeof(tam));
+                        tmp << aux;         
+                    }
+                }
+            }
+            m_codigos.erase(m_codigos.begin() + opc - 1);
         }
         else
         {
@@ -177,6 +233,11 @@ void Gestor::eliminar()
             cin.get();
         }
     }
+    tmp.close();
+    archivo.close();
+
+    remove("usuarios.txt");
+    rename("usuarios.tmp", "usuarios.txt");
 }
 
 void Gestor::modificar()
@@ -255,13 +316,15 @@ void Gestor::mostrar()
     else
     {
         while (!archivo.eof())
+        {
+
             for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
             {
                 cadTmp = "";
                 archivo.read((char*)&tam, sizeof(tam));
 
                 if (archivo.eof())
-                    break;
+                    return;
 
                 while (int(tam--))
                 {
@@ -285,7 +348,7 @@ void Gestor::mostrar()
                         usuarioTmp.setCodigo(cadTmp);
                     break;
                     case CAMPO_PESO:
-                        usuarioTmp.setPeso(stoi(cadTmp));
+                        usuarioTmp.setPeso(stof(cadTmp));
                     break;
                     case CAMPO_SEXO:
                         usuarioTmp.setGenero(cadTmp[0]);
@@ -308,6 +371,7 @@ void Gestor::mostrar()
                     << endl;
             else
                 cout << " Aún no se han ingresado usuarios" << endl;
+        }
         archivo.close();
     }
 }
@@ -333,8 +397,8 @@ void Gestor::capturar_datos(Usuario& usuario)
     string codigo;
     string nombre;
     string apellido;
-    unsigned int edad;
     string genero;
+    unsigned int edad;
     float altura;
     float peso;
     bool continuar = false;
@@ -453,8 +517,8 @@ void Gestor::capturar_datos(Usuario& usuario)
 
 bool Gestor::codigo_usado(const string codigo)
 {
-    for (int i = 0; i < m_usuarios.size(); i++)
-        if (codigo == m_usuarios[i].getCodigo())
+    for (int i = 0; i < m_codigos.size(); i++)
+        if (codigo == m_codigos[i])
             return true;
     return false;
 }
@@ -573,23 +637,4 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
     }
-}
-
-unsigned char Gestor::eliminar_ceros(string &cad)
-{
-    bool punto = false;
-    unsigned char tam = 0;
-
-    for (char x: cad)
-    {
-        if (punto && x == '0')
-            return tam;
-        else if (x == '.')
-        {
-            punto = true;
-            --tam;
-        }
-        ++tam;
-    }
-    return 0;
 }
