@@ -9,42 +9,6 @@ Gestor::Gestor()
         fstream archivo_abrir("usuarios.txt", ios::out);
         archivo_abrir.close();
     }
-    /*
-    else
-    {
-        string aux;
-        Usuario usuarioTmp;
-        while (!archivo.eof())
-        {
-            getline(archivo, aux, '|');
-            if (aux.size() > 0)
-            {
-                usuarioTmp.setCodigo(aux);
-                
-                getline(archivo, aux, '|');
-                usuarioTmp.setNombre(aux);
-
-                getline(archivo, aux, '|');
-                usuarioTmp.setApellido(aux);
-
-                getline(archivo, aux, '|');
-                usuarioTmp.setEdad(stoi(aux));
-
-                getline(archivo, aux, '|');
-                usuarioTmp.setGenero(aux.c_str()[0]);
-
-                getline(archivo, aux, '|');
-                usuarioTmp.setPeso(stof(aux));
-                
-                getline(archivo, aux);
-                usuarioTmp.setAltura(stof(aux));
-
-                m_usuarios.push_back(usuarioTmp);
-            }
-        }
-        archivo.close();
-    }
-    */
 }
 
 Gestor::~Gestor()
@@ -184,7 +148,7 @@ void Gestor::capturar(const Usuario& usuario)
     for(int i = 0; i < tam; ++i)
         archivo << aux[i];
     
-    m_usuarios.push_back(usuario);
+    archivo.close();
     cout << endl
          << " Usuario añadido exitosamente." << endl
          << " Presione ENTER para continuar..." << endl;
@@ -233,18 +197,18 @@ void Gestor::modificar()
             {
                 cout << endl
                      << " Seleccione el campo a modificar:" << endl;
-                cout << char(CAMPO_NOM) << ") Nombre" << endl
-                     << char(CAMPO_APE) << ") Apellido" << endl
-                     << char(CAMPO_EDAD) << ") Edad" << endl
-                     << char(CAMPO_SEXO) << ") Sexo" << endl
-                     << char(CAMPO_PESO) << ") Peso" << endl
-                     << char(CAMPO_ALTURA) << ") Altura" << endl
-                     << char(CAMPO_CANCELAR) << ") Cancelar" << endl
+                cout << char(OPC_CAMPO_NOM) << ") Nombre" << endl
+                     << char(OPC_CAMPO_APE) << ") Apellido" << endl
+                     << char(OPC_CAMPO_EDAD) << ") Edad" << endl
+                     << char(OPC_CAMPO_SEXO) << ") Sexo" << endl
+                     << char(OPC_CAMPO_PESO) << ") Peso" << endl
+                     << char(OPC_CAMPO_ALTURA) << ") Altura" << endl
+                     << char(OPC_CAMPO_CANCELAR) << ") Cancelar" << endl
                      << "Opción: ";
                 cin >> opc;
-            }while(opc < CAMPO_NOM || opc > CAMPO_CANCELAR);
+            }while(opc < OPC_CAMPO_NOM || opc > OPC_CAMPO_CANCELAR);
             
-            if (opc != CAMPO_CANCELAR)
+            if (opc != OPC_CAMPO_CANCELAR)
             {
                 usuarioTmp.setAltura((m_usuarios.begin() + i - 1)->getAltura());
                 usuarioTmp.setApellido((m_usuarios.begin() + i - 1)->getApellido());
@@ -279,20 +243,73 @@ void Gestor::modificar()
 
 void Gestor::mostrar()
 {
-    unsigned int i;
-    for (i = 0; i < m_usuarios.size(); i++)
-        cout << " Usuario #" << i + 1 << endl
-             << " Código: " << m_usuarios[i].getCodigo() << endl
-             << " Nombre: " << m_usuarios[i].getNombre() << endl
-             << " Apellido: " << m_usuarios[i].getApellido() << endl
-             << " Edad: "   << m_usuarios[i].getEdad() << endl
-             << " Género: " << m_usuarios[i].getGenero() << endl
-             << " Peso: " << m_usuarios[i].getPeso() << endl
-             << " Altura: " << m_usuarios[i].getAltura() << endl
-             << "----------------------------------------------"
-             << endl;
-    if (!i)
-        cout << " Aún no se han ingresado usuarios" << endl;
+    unsigned long cont = 0;
+    fstream archivo("usuarios.txt", ios::in);
+    Usuario usuarioTmp;
+    string cadTmp;
+    char charTmp;
+    unsigned char tam;
+
+    if (!archivo.is_open())
+        cout << " Error en el archivo de entrada" << endl;
+    else
+    {
+        while (!archivo.eof())
+            for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
+            {
+                cadTmp = "";
+                archivo.read((char*)&tam, sizeof(tam));
+
+                if (archivo.eof())
+                    break;
+
+                while (int(tam--))
+                {
+                    archivo.get(charTmp);
+                    cadTmp += charTmp;
+                }
+                switch (i)
+                {
+                    case CAMPO_ALTURA:
+                        usuarioTmp.setAltura(stof(cadTmp));
+                    break;
+                    case CAMPO_APE:
+                        usuarioTmp.setApellido(cadTmp);
+                    break;
+                    case CAMPO_NOM:
+                        usuarioTmp.setNombre(cadTmp);
+                    break;
+                    case CAMPO_COD:
+                        if (cadTmp.length())
+                            ++cont;
+                        usuarioTmp.setCodigo(cadTmp);
+                    break;
+                    case CAMPO_PESO:
+                        usuarioTmp.setPeso(stoi(cadTmp));
+                    break;
+                    case CAMPO_SEXO:
+                        usuarioTmp.setGenero(cadTmp[0]);
+                    break;
+                    case CAMPO_EDAD:
+                        usuarioTmp.setEdad(stoi(cadTmp));
+                    break;
+                }
+            }
+            if (cont)
+                cout << " Usuario #" << cont << endl
+                    << " Código: " << usuarioTmp.getCodigo() << endl
+                    << " Nombre: " << usuarioTmp.getNombre() << endl
+                    << " Apellido: " << usuarioTmp.getApellido() << endl
+                    << " Edad: "   << usuarioTmp.getEdad() << endl
+                    << " Género: " << usuarioTmp.getGenero() << endl
+                    << " Peso: " << usuarioTmp.getPeso() << endl
+                    << " Altura: " << usuarioTmp.getAltura() << endl
+                    << "----------------------------------------------"
+                    << endl;
+            else
+                cout << " Aún no se han ingresado usuarios" << endl;
+        archivo.close();
+    }
 }
 
 void Gestor::escribir()

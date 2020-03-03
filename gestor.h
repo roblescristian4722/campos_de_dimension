@@ -7,6 +7,8 @@
     #define CLEAR system("clear")
 #endif
 
+#define CANTIDAD_CAMPOS 7
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -34,6 +36,7 @@ public:
 
 private:
     vector<Usuario> m_usuarios;
+    vector<string> m_codigos;
     enum OPC
     {
         OPC_CAPTURAR = '1',
@@ -44,15 +47,26 @@ private:
         OPC_SALIR
     };
 
+    enum OPC_CAMPOS_MOD
+    {
+        OPC_CAMPO_NOM = '1',
+        OPC_CAMPO_APE,
+        OPC_CAMPO_EDAD,
+        OPC_CAMPO_SEXO,
+        OPC_CAMPO_PESO,
+        OPC_CAMPO_ALTURA,
+        OPC_CAMPO_CANCELAR
+    };
+
     enum CAMPOS
     {
-        CAMPO_NOM = '1',
+        CAMPO_COD = 0,
+        CAMPO_NOM,
         CAMPO_APE,
         CAMPO_EDAD,
         CAMPO_SEXO,
         CAMPO_PESO,
-        CAMPO_ALTURA,
-        CAMPO_CANCELAR
+        CAMPO_ALTURA
     };
 };
 
