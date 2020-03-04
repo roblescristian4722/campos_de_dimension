@@ -1,5 +1,4 @@
 #include "gestor.h"
-#define CHAR_SIZE 1
 
 Gestor::Gestor()
 {
@@ -218,6 +217,15 @@ void Gestor::capturar(const Usuario& usuario)
     archivo.write((char*)&tam, sizeof(tam));
     archivo << aux;
 
+    aux = to_string(usuario.getMasaCorporal());
+    tam = aux.length();
+    archivo.write((char*)&tam, sizeof(tam));
+    archivo << aux;
+
+    tam = usuario.getTipoSangre().length();
+    archivo.write((char*)&tam, sizeof(tam));
+    archivo << usuario.getTipoSangre();
+
     aux2 = to_string(usuario.getAltura());
     tam = aux2.length();
     archivo.write((char*)&tam, sizeof(tam));
@@ -318,6 +326,7 @@ void Gestor::modificar()
                      << char(OPC_CAMPO_EDAD) << ") Edad" << endl
                      << char(OPC_CAMPO_SEXO) << ") Sexo" << endl
                      << char(OPC_CAMPO_PESO) << ") Peso" << endl
+                     << char(OPC_CAMPO_TIPO_SANGRE) << ") Tipo de sangre" << endl
                      << char(OPC_CAMPO_ALTURA) << ") Altura" << endl
                      << char(OPC_CAMPO_CANCELAR) << ") Cancelar" << endl
                      << "Opción: ";
@@ -365,6 +374,12 @@ void Gestor::modificar()
                                 break;
                                 case CAMPO_NOM:
                                     usuarioTmp.setNombre(aux);
+                                break;
+                                case CAMPO_TIPO_SANGRE:
+                                    usuarioTmp.setTipoSangre(aux);
+                                break;
+                                case CAMPO_MASA:
+                                    usuarioTmp.setMasaCorporal(stof(aux));
                                 break;
                             }
                         }
@@ -429,6 +444,17 @@ void Gestor::modificar()
                                     tam = usuarioTmp.getNombre().length();
                                     tmp.write((char*)&tam, sizeof(tam));
                                     tmp << usuarioTmp.getNombre();
+                                break;
+                                case CAMPO_TIPO_SANGRE:
+                                    tam = usuarioTmp.getTipoSangre().length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << usuarioTmp.getTipoSangre();
+                                break;
+                                case CAMPO_MASA:
+                                    tam = to_string(usuarioTmp.getMasaCorporal()).length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    cout << usuarioTmp.getMasaCorporal() << " " << int(tam)  ;
+                                    tmp << to_string(usuarioTmp.getMasaCorporal());
                                 break;
                             }
                         }
@@ -515,6 +541,12 @@ void Gestor::mostrar()
                     case CAMPO_EDAD:
                         usuarioTmp.setEdad(stoi(cadTmp));
                     break;
+                    case CAMPO_MASA:
+                        usuarioTmp.setMasaCorporal(stof(cadTmp));
+                    break;
+                    case CAMPO_TIPO_SANGRE:
+                        usuarioTmp.setTipoSangre(cadTmp);
+                    break;
                 }
             }
             if (cont)
@@ -525,6 +557,8 @@ void Gestor::mostrar()
                     << " Edad: "   << usuarioTmp.getEdad() << endl
                     << " Género: " << usuarioTmp.getGenero() << endl
                     << " Peso: " << usuarioTmp.getPeso() << endl
+                    << " Masa corporal: " << usuarioTmp.getMasaCorporal() << endl
+                    << " Tipo de sangre: " << usuarioTmp.getTipoSangre() << endl
                     << " Altura: " << usuarioTmp.getAltura() << endl
                     << "----------------------------------------------"
                     << endl;
@@ -541,6 +575,7 @@ void Gestor::capturar_datos(Usuario& usuario)
     string nombre;
     string apellido;
     string genero;
+    string tipoSangre;
     unsigned int edad;
     float altura;
     float peso;
@@ -549,8 +584,9 @@ void Gestor::capturar_datos(Usuario& usuario)
     // Expresiones regulares
     regex expCodigo("([1-9]{1}[0-9]{8})$");
     regex expNombre("(?:[a-zA-ZñÑ]{4,})(?: [a-zA-ZñÑ]{4,})?{1,2}");
-    regex expApellido("(?:[a-zA-ZñÑ]{4,})+(?: [a-zA-ZñÑ]{3,})$");
-    regex expGenero("(?:[mMfF]){1}$");
+    regex expApellido("(?:[a-zA-ZñÑ]{4,})(?: [a-zA-ZñÑ]{3,})$");
+    regex expGenero("(?:[MF]){1}$");
+    regex expTipoSangre("(AB|A|B|O)(?:[+-]{1})$");
     
     cout << " Presione ENTER para continuar e ingrese los siguientes datos"
          << endl << endl;
@@ -561,7 +597,6 @@ void Gestor::capturar_datos(Usuario& usuario)
         CLEAR;
         cout << " Código (9 dígitos): ";
         getline(cin, codigo);
-        cout << codigo_usado(codigo) << endl;
         if (codigo_usado(codigo))
         {
             cout << endl
@@ -642,6 +677,24 @@ void Gestor::capturar_datos(Usuario& usuario)
         cin >> peso;
     }while(peso > 300 || peso < 30);
 
+    continuar = false;
+    cin.ignore();
+    //Tipo de sangre
+    do
+    {
+        CLEAR;
+        cout << " Tipo de sangre (AB, A, B, O)(+, -): ";
+        getline(cin, tipoSangre);
+        if (!regex_match(tipoSangre, expTipoSangre))
+        {
+            cout << endl
+                 << " Error, vuelva a intentarlo" << endl;
+            cin.get();
+        }
+        else
+            continuar = true;
+    }while(!continuar);
+
     do
     {   
         CLEAR;
@@ -656,6 +709,8 @@ void Gestor::capturar_datos(Usuario& usuario)
     usuario.setGenero(genero[0]);
     usuario.setNombre(nombre);
     usuario.setPeso(peso);
+    usuario.setTipoSangre(tipoSangre);
+    usuario.setMasaCorporal(peso / (altura * altura));
 }
 
 bool Gestor::codigo_usado(const string codigo)
@@ -670,12 +725,12 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
 {
     bool continuar = false;
 
-
     // Expresiones regulares
     regex expCodigo("([1-9]{1}[0-9]{8})$");
     regex expNombre("(?:[a-zA-ZñÑ]{4,})(?: [a-zA-ZñÑ]{4,})?{1,2}");
     regex expApellido("(?:[a-zA-ZñÑ]{4,})+(?: [a-zA-ZñÑ]{3,})$");
     regex expGenero("(?:[mMfF]){1}$");
+    regex expTipoSangre("(AB|A|B|O)(?:[+-]{1})$");
 
     cin.ignore();
     switch (i)
@@ -752,6 +807,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
                 cin >> peso;
             }while(peso > 300 || peso < 30);
             usuario.setPeso(peso);
+            usuario.setMasaCorporal(peso / (usuario.getAltura() * usuario.getAltura()));
         }
         break;
 
@@ -768,6 +824,33 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
+        case OPC_CAMPO_TIPO_SANGRE:
+        {
+            string tipoSangre;
+            do
+            {
+                CLEAR;
+                cout << " Tipo de sangre (AB, A, B, O)(+, -): ";
+                getline(cin, tipoSangre);
+                if (codigo_usado(tipoSangre))
+                {
+                    cout << endl
+                        << " Error, código en uso. Presione ENTER para continuar";
+                    cin.get();
+                }
+                else if (!regex_match(tipoSangre, expTipoSangre))
+                {
+                    cout << endl
+                        << " Error, vuelva a intentarlo" << endl;
+                    cin.get();
+                }
+                else
+                    continuar = true;
+            }while(!continuar);
+            usuario.setTipoSangre(tipoSangre);
+        }
+        break;
+
         case OPC_CAMPO_ALTURA:
         {
             float altura;
@@ -778,6 +861,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
                 cin >> altura;;
             } while (altura < 0.8 || altura > 2.5);
             usuario.setAltura(altura);
+            usuario.setMasaCorporal(usuario.getPeso() / (altura * altura));
         }
         break;
     }

@@ -7,7 +7,8 @@
     #define CLEAR system("clear")
 #endif
 
-#define CANTIDAD_CAMPOS 7
+#define CANTIDAD_CAMPOS 9
+#define CHAR_SIZE 1
 
 #include <iostream>
 #include <cstdio>
@@ -35,9 +36,8 @@ public:
     void modificar_datos(Usuario& usuario, char i);
 
 private:
-    vector<Usuario> m_usuarios;
     vector<string> m_codigos;
-    enum OPC
+    enum OPC_MENU
     {
         OPC_CAPTURAR = '1',
         OPC_MOSTRAR,
@@ -54,11 +54,13 @@ private:
         OPC_CAMPO_EDAD,
         OPC_CAMPO_SEXO,
         OPC_CAMPO_PESO,
+        OPC_CAMPO_MASA,
+        OPC_CAMPO_TIPO_SANGRE,
         OPC_CAMPO_ALTURA,
         OPC_CAMPO_CANCELAR
     };
 
-    enum CAMPOS
+    enum CAMPOS_ACCEDER_ARCHIVO
     {
         CAMPO_COD = 0,
         CAMPO_NOM,
@@ -66,6 +68,8 @@ private:
         CAMPO_EDAD,
         CAMPO_SEXO,
         CAMPO_PESO,
+        CAMPO_MASA,
+        CAMPO_TIPO_SANGRE,
         CAMPO_ALTURA
     };
 };
