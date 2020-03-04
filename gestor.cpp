@@ -97,38 +97,88 @@ void Gestor::menu()
 
 void Gestor::buscar()
 {
+    bool found = false;
+    bool show = false;
+    char auxChar;
+    unsigned char tam;
     string codigo;
-    unsigned int i;
+    string aux;
+    Usuario usuarioTmp;
+    fstream archivo("usuarios.txt", ios::in);
+
     if (!m_codigos.size())
         cout << " Aún no se han ingresado usuarios " << endl << endl
              << " Presione ENTER para continuar..." << endl;
     else
     {
-        /*
         cout << " Ingrese el código a buscar: ";
         getline(cin, codigo);
-        for (i = 0; i < m_codigos.size(); i++)
-            if(m_codigos[i].getCodigo() == codigo)
+
+        while (!archivo.eof())
+        {
+            for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
             {
-                CLEAR;
-                cout << endl
-                    << " Usuario #" << i + 1 << endl
-                    << " Código: " << m_codigos[i].getCodigo() << endl
-                    << " Nombre: " << m_codigos[i].getNombre() << endl
-                    << " Apellido: " << m_codigos[i].getApellido() << endl
-                    << " Edad: " << m_codigos[i].getEdad() << endl
-                    << " Género: " << m_codigos[i].getGenero() << endl
-                    << " Peso: " << m_codigos[i].getPeso() << endl
-                    << " Altura: " << m_codigos[i].getAltura() << endl
-                    << "----------------------------------------------"
-                    << endl << endl
-                    << " Presione ENTER para continuar..." << endl;
-                break;
+                archivo.read((char*)&tam, sizeof(tam));
+                if (archivo.eof())
+                    break;
+
+                aux = "";
+                for (int j = 0; j < int(tam); ++j)
+                {
+                    archivo.get(auxChar);
+                    aux += auxChar;
+                }
+
+                if(aux == codigo)
+                {
+                    usuarioTmp.setCodigo(aux);
+                    found = true;
+                    show = true;
+                }
+                else if (show)
+                {
+                    switch (i)
+                    {
+                        case CAMPO_ALTURA:
+                            usuarioTmp.setAltura(stof(aux));
+                            show = false;
+                        break;
+                        case CAMPO_APE:
+                            usuarioTmp.setApellido(aux);
+                        break;
+                        case CAMPO_NOM:
+                            usuarioTmp.setNombre(aux);
+                        break;
+                        case CAMPO_PESO:
+                            usuarioTmp.setPeso(stof(aux));
+                        break;
+                        case CAMPO_SEXO:
+                            usuarioTmp.setGenero(aux[0]);
+                        break;
+                        case CAMPO_EDAD:
+                            usuarioTmp.setEdad(stoi(aux));
+                        break;
+                    }   
+                }
             }
-        if (i == m_codigos.size())
+        }
+        if (found)
+        {
+            CLEAR;
             cout << endl
-                << " Código no encontrado, presione ENTER para continuar..." << endl;
-        */
+                 <<" Código: " << usuarioTmp.getCodigo() << endl
+                 << " Nombre: " << usuarioTmp.getNombre() << endl
+                 << " Apellido: " << usuarioTmp.getApellido() << endl
+                 << " Edad: " << usuarioTmp.getEdad() << endl
+                 << " Género: " << usuarioTmp.getGenero() << endl
+                 << " Peso: " << usuarioTmp.getPeso() << endl
+                 << " Altura: " << usuarioTmp.getAltura() << endl
+                 << "----------------------------------------------"
+                 << endl << endl
+                 << " Presione ENTER para continuar..." << endl;
+        }
+        else
+            cout << " Correo no encontrado" << endl;
     }
 }
 
