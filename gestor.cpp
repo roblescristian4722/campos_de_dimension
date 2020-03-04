@@ -119,7 +119,7 @@ void Gestor::buscar()
             {
                 archivo.read((char*)&tam, sizeof(tam));
                 if (archivo.eof())
-                    break;
+                    break;                
 
                 aux = "";
                 for (int j = 0; j < int(tam); ++j)
@@ -233,8 +233,8 @@ void Gestor::capturar(const Usuario& usuario)
     
     archivo.close();
     cout << endl
-         << " Usuario añadido exitosamente." << endl
-         << " Presione ENTER para continuar..." << endl;
+        << " Usuario añadido exitosamente." << endl
+        << " Presione ENTER para continuar..." << endl;
 }
 
 void Gestor::eliminar()
@@ -248,8 +248,12 @@ void Gestor::eliminar()
     fstream tmp("usuarios.tmp", ios::out);
 
     mostrar();
-    if (m_codigos.size())
+    cout << " Salir = 0" << endl;
+    if (!m_codigos.size())
+        cout << " Aún no se han ingresado datos. Presione ENTER para continuar" << endl;
+    else
     {
+
         cout << " Ingrese número del usuario a eliminar: ";
         cin >> opc;
         if (opc <= m_codigos.size() && opc)
@@ -280,7 +284,13 @@ void Gestor::eliminar()
                 }
             }
             m_codigos.erase(m_codigos.begin() + opc - 1);
+            tmp.close();
+            archivo.close();
+            remove("usuarios.txt");
+            rename("usuarios.tmp", "usuarios.txt");
         }
+        else if (!opc)
+            return;
         else
         {
             cout << endl
@@ -289,11 +299,6 @@ void Gestor::eliminar()
             cin.get();
         }
     }
-    tmp.close();
-    archivo.close();
-
-    remove("usuarios.txt");
-    rename("usuarios.tmp", "usuarios.txt");
 }
 
 void Gestor::modificar()
@@ -310,7 +315,9 @@ void Gestor::modificar()
 
     mostrar();
 
-    if (m_codigos.size())
+    if (!m_codigos.size())
+        cout << " Aún no se han ingresado datos. Presione ENTER para continuar" << endl;
+    else
     {
         cout << " Ingrese número del usuario a modificar: ";
         cin >> codMod;
@@ -453,7 +460,6 @@ void Gestor::modificar()
                                 case CAMPO_MASA:
                                     tam = to_string(usuarioTmp.getMasaCorporal()).length();
                                     tmp.write((char*)&tam, sizeof(tam));
-                                    cout << usuarioTmp.getMasaCorporal() << " " << int(tam)  ;
                                     tmp << to_string(usuarioTmp.getMasaCorporal());
                                 break;
                             }
@@ -465,7 +471,8 @@ void Gestor::modificar()
                         }
                     }   
                 }
-                
+                tmp.close();
+                archivo.close();
                 remove("usuarios.txt");
                 rename("usuarios.tmp", "usuarios.txt");
 
@@ -474,7 +481,8 @@ void Gestor::modificar()
                      << " Presione ENTER para continuar..." << endl;
             }
         }
-
+        else if (!codMod)
+            return;
         else
         {
             cout << endl
@@ -483,8 +491,6 @@ void Gestor::modificar()
             cin.get();       
         }
     }
-    tmp.close();
-    archivo.close();
 }
 
 void Gestor::mostrar()
