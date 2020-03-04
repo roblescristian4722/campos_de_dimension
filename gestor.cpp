@@ -99,34 +99,36 @@ void Gestor::buscar()
 {
     string codigo;
     unsigned int i;
-    if (!m_usuarios.size())
+    if (!m_codigos.size())
         cout << " Aún no se han ingresado usuarios " << endl << endl
              << " Presione ENTER para continuar..." << endl;
     else
     {
+        /*
         cout << " Ingrese el código a buscar: ";
         getline(cin, codigo);
-        for (i = 0; i < m_usuarios.size(); i++)
-            if(m_usuarios[i].getCodigo() == codigo)
+        for (i = 0; i < m_codigos.size(); i++)
+            if(m_codigos[i].getCodigo() == codigo)
             {
                 CLEAR;
                 cout << endl
                     << " Usuario #" << i + 1 << endl
-                    << " Código: " << m_usuarios[i].getCodigo() << endl
-                    << " Nombre: " << m_usuarios[i].getNombre() << endl
-                    << " Apellido: " << m_usuarios[i].getApellido() << endl
-                    << " Edad: " << m_usuarios[i].getEdad() << endl
-                    << " Género: " << m_usuarios[i].getGenero() << endl
-                    << " Peso: " << m_usuarios[i].getPeso() << endl
-                    << " Altura: " << m_usuarios[i].getAltura() << endl
+                    << " Código: " << m_codigos[i].getCodigo() << endl
+                    << " Nombre: " << m_codigos[i].getNombre() << endl
+                    << " Apellido: " << m_codigos[i].getApellido() << endl
+                    << " Edad: " << m_codigos[i].getEdad() << endl
+                    << " Género: " << m_codigos[i].getGenero() << endl
+                    << " Peso: " << m_codigos[i].getPeso() << endl
+                    << " Altura: " << m_codigos[i].getAltura() << endl
                     << "----------------------------------------------"
                     << endl << endl
                     << " Presione ENTER para continuar..." << endl;
                 break;
             }
-        if (i == m_usuarios.size())
+        if (i == m_codigos.size())
             cout << endl
                 << " Código no encontrado, presione ENTER para continuar..." << endl;
+        */
     }
 }
 
@@ -209,10 +211,7 @@ void Gestor::eliminar()
                         aux += auxChar;
                     }
                     if (!i && m_codigos[opc - 1] == aux)
-                    {
-                        cout << "adsf" << endl;
                         found = true;
-                    }
                     else if (found && i == CANTIDAD_CAMPOS - 1)
                         found = false;
                     else if (!found)
@@ -226,7 +225,6 @@ void Gestor::eliminar()
         }
         else
         {
-
             cout << endl
                 << " Dato inválido, presione ENTER para continuar..."
                 << endl;
@@ -243,16 +241,23 @@ void Gestor::eliminar()
 void Gestor::modificar()
 {   
     Usuario usuarioTmp;
-    unsigned int i;
+    unsigned int codMod;
     char opc;
+    char auxChar;
+    unsigned char tam;
+    bool found = false;
+    string aux;
+    fstream archivo("usuarios.txt", ios::out | ios::in);
+    fstream tmp("usuarios.tmp", ios::out);
 
     mostrar();
-    if (m_usuarios.size())
+
+    if (m_codigos.size())
     {
         cout << " Ingrese número del usuario a modificar: ";
-        cin >> i;
+        cin >> codMod;
 
-        if (i <= m_usuarios.size() && i)
+        if (codMod <= m_codigos.size() && codMod)
         {   
             do
             {
@@ -271,20 +276,122 @@ void Gestor::modificar()
             
             if (opc != OPC_CAMPO_CANCELAR)
             {
-                usuarioTmp.setAltura((m_usuarios.begin() + i - 1)->getAltura());
-                usuarioTmp.setApellido((m_usuarios.begin() + i - 1)->getApellido());
-                usuarioTmp.setCodigo((m_usuarios.begin() + i - 1)->getCodigo());
-                usuarioTmp.setEdad((m_usuarios.begin() + i - 1)->getEdad());
-                usuarioTmp.setGenero((m_usuarios.begin() + i - 1)->getGenero());
-                usuarioTmp.setNombre((m_usuarios.begin() + i - 1)->getNombre());
-                usuarioTmp.setPeso((m_usuarios.begin() + i - 1)->getPeso());
-
+                while (codMod--)
+                {
+                    for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
+                    {
+                        archivo.read((char*)&tam, sizeof(tam));
+                        if (archivo.eof())
+                            break;
+                        
+                        aux = "";
+                        for (int j = 0; j < int(tam); ++j)
+                        {
+                            archivo.get(auxChar);
+                            aux += auxChar;
+                        }
+                        
+                        if (!codMod)
+                        {
+                            switch (i)
+                            {
+                                case CAMPO_COD:
+                                    usuarioTmp.setCodigo(aux);
+                                break;
+                                case CAMPO_EDAD:
+                                    usuarioTmp.setEdad(stoi(aux));
+                                break;
+                                case CAMPO_PESO:
+                                    usuarioTmp.setPeso(stof(aux));
+                                break;
+                                case CAMPO_SEXO:
+                                    usuarioTmp.setGenero(aux[0]);
+                                break;
+                                case CAMPO_ALTURA:
+                                    usuarioTmp.setAltura(stof(aux));
+                                break;
+                                case CAMPO_APE:
+                                    usuarioTmp.setApellido(aux);
+                                break;
+                                case CAMPO_NOM:
+                                    usuarioTmp.setNombre(aux);
+                                break;
+                            }
+                        }
+                    }
+                }
                 modificar_datos(usuarioTmp, opc);
+                
+                archivo.seekg(0);
+                while (!archivo.eof())
+                {
+                    for (int i = 0; i < CANTIDAD_CAMPOS; ++i)
+                    {
+                        archivo.read((char*)&tam, sizeof(tam));
+                        if (archivo.eof())
+                            break;
 
-                m_usuarios.erase(m_usuarios.begin() + i -1);
-                m_usuarios.insert(m_usuarios.begin() + i - 1, usuarioTmp);
-
-                escribir();
+                        aux = "";
+                        for (int j = 0; j < int(tam); ++j)
+                        {
+                            archivo.get(auxChar);
+                            aux += auxChar;
+                        }
+                        if (!i && aux == usuarioTmp.getCodigo())
+                            found = true;
+                        
+                        if (found)
+                        {
+                            switch (i)
+                            {
+                                case CAMPO_COD:
+                                    tam = usuarioTmp.getCodigo().length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << usuarioTmp.getCodigo();
+                                break;
+                                case CAMPO_EDAD:
+                                    tam = to_string(usuarioTmp.getEdad()).length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << to_string(usuarioTmp.getEdad());
+                                break;
+                                case CAMPO_PESO:
+                                    tam = to_string(usuarioTmp.getPeso()).length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << to_string(usuarioTmp.getPeso());
+                                break;
+                                case CAMPO_SEXO:
+                                    tam = CHAR_SIZE;
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << usuarioTmp.getGenero();
+                                break;
+                                case CAMPO_ALTURA:
+                                    tam = to_string(usuarioTmp.getAltura()).length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << to_string(usuarioTmp.getAltura());
+                                    found = false;
+                                break;
+                                case CAMPO_APE:
+                                    tam = usuarioTmp.getApellido().length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << usuarioTmp.getApellido();
+                                break;
+                                case CAMPO_NOM:
+                                    tam = usuarioTmp.getNombre().length();
+                                    tmp.write((char*)&tam, sizeof(tam));
+                                    tmp << usuarioTmp.getNombre();
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            tmp.write((char*)&tam, sizeof(tam));
+                            tmp << aux;
+                        }
+                    }   
+                }
+                
+                remove("usuarios.txt");
+                rename("usuarios.tmp", "usuarios.txt");
 
                 cout << endl
                      << " Dato modificado correctamente" << endl
@@ -300,6 +407,8 @@ void Gestor::modificar()
             cin.get();       
         }
     }
+    tmp.close();
+    archivo.close();
 }
 
 void Gestor::mostrar()
@@ -374,22 +483,6 @@ void Gestor::mostrar()
         }
         archivo.close();
     }
-}
-
-void Gestor::escribir()
-{
-    fstream archivo("usuarios.txt", ios::out);
-    if (!archivo.is_open())
-        cerr << " Error en el archivo" << endl;
-    else
-        for (int i = 0; i < m_usuarios.size(); i++)
-            archivo << m_usuarios[i].getCodigo() << '|'
-                    << m_usuarios[i].getNombre() << '|'
-                    << m_usuarios[i].getApellido() << '|'
-                    << m_usuarios[i].getEdad() << '|'
-                    << m_usuarios[i].getGenero() << '|'
-                    << m_usuarios[i].getPeso() << '|'
-                    << m_usuarios[i].getAltura() << '\n';
 }
 
 void Gestor::capturar_datos(Usuario& usuario)
@@ -527,6 +620,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
 {
     bool continuar = false;
 
+
     // Expresiones regulares
     regex expCodigo("([1-9]{1}[0-9]{8})$");
     regex expNombre("(?:[a-zA-ZñÑ]{4,})(?: [a-zA-ZñÑ]{4,})?{1,2}");
@@ -536,7 +630,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
     cin.ignore();
     switch (i)
     {
-        case CAMPO_NOM:
+        case OPC_CAMPO_NOM:
         {
             string nombre;
             do
@@ -561,7 +655,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
-        case CAMPO_APE:
+        case OPC_CAMPO_APE:
         {
             string apellido;
             do
@@ -585,7 +679,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
-        case CAMPO_EDAD:
+        case OPC_CAMPO_EDAD:
         {
             unsigned int edad;
             do
@@ -598,7 +692,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
-        case CAMPO_PESO:
+        case OPC_CAMPO_PESO:
         {
             float peso;
             do
@@ -611,7 +705,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
-        case CAMPO_SEXO:
+        case OPC_CAMPO_SEXO:
         {
             string genero;
             do
@@ -624,7 +718,7 @@ void Gestor::modificar_datos(Usuario& usuario, char i)
         }
         break;
 
-        case CAMPO_ALTURA:
+        case OPC_CAMPO_ALTURA:
         {
             float altura;
             do
